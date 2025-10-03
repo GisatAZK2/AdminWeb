@@ -452,6 +452,334 @@ class AdminDashboardTester:
         
         return success_count == total_tests and total_tests > 0
     
+    def test_get_admins(self):
+        """Test GET /api/admins endpoint (protected)"""
+        if not self.token:
+            self.log_result("GET Admins", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.get(f"{API_BASE}/admins", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("GET Admins", True, f"Retrieved {len(data)} admins")
+                    return True
+                else:
+                    self.log_result("GET Admins", False, "Response is not a list", data)
+                    return False
+            else:
+                self.log_result("GET Admins", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("GET Admins", False, "Request failed", str(e))
+            return False
+    
+    def test_create_admin(self):
+        """Test POST /api/admins endpoint"""
+        if not self.token:
+            self.log_result("CREATE Admin", False, "No token available")
+            return False
+            
+        try:
+            admin_data = {
+                "username": "testadmin",
+                "email": "testadmin@example.com",
+                "password": "password123",
+                "role": "admin"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.post(f"{API_BASE}/admins", 
+                                   json=admin_data, 
+                                   headers=headers, 
+                                   timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data:
+                    self.created_records['admins'].append(data['id'])
+                    self.log_result("CREATE Admin", True, f"Admin created with ID: {data['id']}")
+                    return True
+                else:
+                    self.log_result("CREATE Admin", False, "No ID in response", data)
+                    return False
+            else:
+                self.log_result("CREATE Admin", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("CREATE Admin", False, "Request failed", str(e))
+            return False
+    
+    def test_analytics_endpoint(self):
+        """Test GET /api/analytics endpoint (protected)"""
+        if not self.token:
+            self.log_result("GET Analytics", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.get(f"{API_BASE}/analytics", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_keys = ['sellers', 'categories', 'events', 'users', 'products', 'variants', 'orders', 'revenue']
+                if all(key in data for key in expected_keys):
+                    self.log_result("GET Analytics", True, f"Analytics retrieved with all expected keys")
+                    return True
+                else:
+                    missing_keys = [key for key in expected_keys if key not in data]
+                    self.log_result("GET Analytics", False, f"Missing keys: {missing_keys}", data)
+                    return False
+            else:
+                self.log_result("GET Analytics", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("GET Analytics", False, "Request failed", str(e))
+            return False
+    
+    def test_seller_balance_transactions(self):
+        """Test GET /api/seller-balance-transactions endpoint (protected)"""
+        if not self.token:
+            self.log_result("GET Seller Balance Transactions", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.get(f"{API_BASE}/seller-balance-transactions", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("GET Seller Balance Transactions", True, f"Retrieved {len(data)} transactions")
+                    return True
+                else:
+                    self.log_result("GET Seller Balance Transactions", False, "Response is not a list", data)
+                    return False
+            else:
+                self.log_result("GET Seller Balance Transactions", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("GET Seller Balance Transactions", False, "Request failed", str(e))
+            return False
+    
+    def test_seller_balances(self):
+        """Test GET /api/seller-balances endpoint (protected)"""
+        if not self.token:
+            self.log_result("GET Seller Balances", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.get(f"{API_BASE}/seller-balances", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("GET Seller Balances", True, f"Retrieved {len(data)} seller balances")
+                    return True
+                else:
+                    self.log_result("GET Seller Balances", False, "Response is not a list", data)
+                    return False
+            else:
+                self.log_result("GET Seller Balances", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("GET Seller Balances", False, "Request failed", str(e))
+            return False
+    
+    def test_seller_deletion_requests_get(self):
+        """Test GET /api/seller-deletion-requests endpoint (protected)"""
+        if not self.token:
+            self.log_result("GET Seller Deletion Requests", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.get(f"{API_BASE}/seller-deletion-requests", headers=headers, timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if isinstance(data, list):
+                    self.log_result("GET Seller Deletion Requests", True, f"Retrieved {len(data)} deletion requests")
+                    return True
+                else:
+                    self.log_result("GET Seller Deletion Requests", False, "Response is not a list", data)
+                    return False
+            else:
+                self.log_result("GET Seller Deletion Requests", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("GET Seller Deletion Requests", False, "Request failed", str(e))
+            return False
+    
+    def test_create_seller_deletion_request(self):
+        """Test POST /api/seller-deletion-requests endpoint"""
+        if not self.token:
+            self.log_result("CREATE Seller Deletion Request", False, "No token available")
+            return False
+            
+        # First create a seller to delete
+        if not self.created_records['sellers']:
+            self.test_create_seller()
+            
+        if not self.created_records['sellers']:
+            self.log_result("CREATE Seller Deletion Request", False, "No seller available to create deletion request")
+            return False
+            
+        try:
+            request_data = {
+                "seller_id": self.created_records['sellers'][0],
+                "reason": "Test deletion request for API testing"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.post(f"{API_BASE}/seller-deletion-requests", 
+                                   json=request_data, 
+                                   headers=headers, 
+                                   timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'id' in data:
+                    self.created_records.setdefault('deletion_requests', []).append(data['id'])
+                    self.log_result("CREATE Seller Deletion Request", True, f"Deletion request created with ID: {data['id']}")
+                    return True
+                else:
+                    self.log_result("CREATE Seller Deletion Request", False, "No ID in response", data)
+                    return False
+            else:
+                self.log_result("CREATE Seller Deletion Request", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("CREATE Seller Deletion Request", False, "Request failed", str(e))
+            return False
+    
+    def test_update_seller_deletion_request(self):
+        """Test PUT /api/seller-deletion-requests/{id} endpoint"""
+        if not self.token:
+            self.log_result("UPDATE Seller Deletion Request", False, "No token available")
+            return False
+            
+        # Ensure we have a deletion request to update
+        if not hasattr(self, 'created_records') or 'deletion_requests' not in self.created_records or not self.created_records['deletion_requests']:
+            self.test_create_seller_deletion_request()
+            
+        if not self.created_records.get('deletion_requests'):
+            self.log_result("UPDATE Seller Deletion Request", False, "No deletion request available to update")
+            return False
+            
+        try:
+            request_id = self.created_records['deletion_requests'][0]
+            update_data = {
+                "status": "approved",
+                "admin_notes": "Approved for testing purposes"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.put(f"{API_BASE}/seller-deletion-requests/{request_id}", 
+                                  json=update_data, 
+                                  headers=headers, 
+                                  timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'status' in data and data['status'] == 'approved':
+                    self.log_result("UPDATE Seller Deletion Request", True, f"Deletion request {request_id} approved")
+                    return True
+                else:
+                    self.log_result("UPDATE Seller Deletion Request", False, "Status not updated correctly", data)
+                    return False
+            else:
+                self.log_result("UPDATE Seller Deletion Request", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("UPDATE Seller Deletion Request", False, "Request failed", str(e))
+            return False
+    
+    def test_file_upload(self):
+        """Test POST /api/upload endpoint for file upload"""
+        try:
+            # Create a simple test file
+            test_content = b"This is a test file for upload testing"
+            files = {'file': ('test.txt', test_content, 'text/plain')}
+            data = {'bucket': 'uploads', 'folder': 'test'}
+            
+            response = requests.post(f"{API_BASE}/upload", 
+                                   files=files, 
+                                   data=data, 
+                                   timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'success' in data and data['success'] and 'url' in data:
+                    self.log_result("File Upload", True, f"File uploaded successfully: {data['url']}")
+                    return True
+                else:
+                    self.log_result("File Upload", False, "Invalid response format", data)
+                    return False
+            else:
+                self.log_result("File Upload", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("File Upload", False, "Request failed", str(e))
+            return False
+    
+    def test_update_admin(self):
+        """Test PUT /api/admins/{id} endpoint"""
+        if not self.token:
+            self.log_result("UPDATE Admin", False, "No token available")
+            return False
+            
+        # Ensure we have an admin to update
+        if not self.created_records['admins']:
+            self.test_create_admin()
+            
+        if not self.created_records['admins']:
+            self.log_result("UPDATE Admin", False, "No admin available to update")
+            return False
+            
+        try:
+            admin_id = self.created_records['admins'][0]
+            update_data = {
+                "username": "updatedtestadmin",
+                "email": "updatedtestadmin@example.com",
+                "role": "visitor"
+            }
+            
+            headers = {"Authorization": f"Bearer {self.token}"}
+            response = requests.put(f"{API_BASE}/admins/{admin_id}", 
+                                  json=update_data, 
+                                  headers=headers, 
+                                  timeout=10)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'username' in data and data['username'] == 'updatedtestadmin':
+                    self.log_result("UPDATE Admin", True, f"Admin {admin_id} updated successfully")
+                    return True
+                else:
+                    self.log_result("UPDATE Admin", False, "Admin not updated correctly", data)
+                    return False
+            else:
+                self.log_result("UPDATE Admin", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("UPDATE Admin", False, "Request failed", str(e))
+            return False
+    
     def test_delete_operations(self):
         """Test DELETE operations for removing records"""
         if not self.token:
@@ -509,6 +837,22 @@ class AdminDashboardTester:
                     self.log_result("DELETE Event", False, f"HTTP {response.status_code}", response.text)
             except Exception as e:
                 self.log_result("DELETE Event", False, "Request failed", str(e))
+        
+        # Delete admin
+        if self.created_records['admins']:
+            admin_id = self.created_records['admins'][0]
+            try:
+                response = requests.delete(f"{API_BASE}/admins/{admin_id}", 
+                                         headers=headers, 
+                                         timeout=10)
+                total_tests += 1
+                if response.status_code == 200:
+                    success_count += 1
+                    self.log_result("DELETE Admin", True, f"Deleted admin {admin_id}")
+                else:
+                    self.log_result("DELETE Admin", False, f"HTTP {response.status_code}", response.text)
+            except Exception as e:
+                self.log_result("DELETE Admin", False, "Request failed", str(e))
         
         return success_count == total_tests and total_tests > 0
     
