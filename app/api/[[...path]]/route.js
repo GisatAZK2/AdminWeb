@@ -297,20 +297,31 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: authResult.error }, { status: authResult.status })
       }
       
+      // Simple query first
       const { data, error } = await supabase
         .from('seller_balances')
-        .select(`
-          *,
-          sellers (
-            name,
-            store_name,
-            email
-          )
-        `)
+        .select('*')
         .order('updated_at', { ascending: false })
         
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-      return NextResponse.json(data)
+      
+      // Get seller info for each balance record
+      const enrichedData = await Promise.all(
+        data.map(async (balance) => {
+          const { data: sellerData } = await supabase
+            .from('sellers')
+            .select('name, store_name, email')
+            .eq('id', balance.seller_id)
+            .single()
+          
+          return {
+            ...balance,
+            sellers: sellerData
+          }
+        })
+      )
+      
+      return NextResponse.json(enrichedData)
     }
 
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
