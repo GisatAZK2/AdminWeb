@@ -179,7 +179,6 @@ backend:
         agent: "testing"
         comment: "Railway environment variables properly loaded: RAILWAY_API_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID, RAILWAY_SERVICE_ID all present and accessible."
 
-backend:
   - task: "Categories CRUD with image upload"
     implemented: true
     working: true
@@ -230,7 +229,7 @@ backend:
     working: false
     file: "app/api/[[...path]]/route.js"
     stuck_count: 1
-    priority: "high"
+    priority: "medium"
     needs_retesting: false
     status_history:
       - working: true
@@ -245,7 +244,7 @@ backend:
     working: false
     file: "app/api/[[...path]]/route.js"
     stuck_count: 1
-    priority: "high"
+    priority: "medium"
     needs_retesting: false
     status_history:
       - working: true
@@ -253,7 +252,7 @@ backend:
         comment: "Added seller deletion requests GET, POST, PUT endpoints"
       - working: false
         agent: "testing"
-        comment: "Seller deletion requests API has database relationship issues. GET endpoint fails with 'Could not find a relationship between seller_deletion_requests and sellers'. POST endpoint fails with empty error response."
+        comment: "Seller deletion requests API has database table missing. GET/POST endpoints fail with 'relation \"public.seller_deletion_requests\" does not exist'. Database table needs to be created."
 
   - task: "Analytics API endpoints"
     implemented: true
@@ -268,7 +267,7 @@ backend:
         comment: "Added analytics, seller-balance-transactions, seller-balances endpoints"
       - working: true
         agent: "testing"
-        comment: "Minor: Analytics and seller-balances endpoints working correctly. Seller-balance-transactions endpoint has relationship issues but core analytics functionality works."
+        comment: "Analytics and seller-balances endpoints working correctly. Seller-balance-transactions endpoint working with 77 transactions retrieved."
 
   - task: "Sellers CRUD operations"
     implemented: true
