@@ -874,12 +874,22 @@ class AdminDashboardTester:
             ("GET Sellers", self.test_get_sellers),
             ("GET Categories", self.test_get_categories),
             ("GET Events", self.test_get_events),
+            ("GET Admins", self.test_get_admins),
             ("GET Stats", self.test_get_stats),
+            ("GET Analytics", self.test_analytics_endpoint),
+            ("GET Seller Balance Transactions", self.test_seller_balance_transactions),
+            ("GET Seller Balances", self.test_seller_balances),
+            ("GET Seller Deletion Requests", self.test_seller_deletion_requests_get),
+            ("File Upload", self.test_file_upload),
             ("CREATE Seller", self.test_create_seller),
             ("CREATE Category", self.test_create_category),
             ("CREATE Event", self.test_create_event),
+            ("CREATE Admin", self.test_create_admin),
+            ("CREATE Seller Deletion Request", self.test_create_seller_deletion_request),
             ("GET Individual Records", self.test_get_individual_records),
             ("UPDATE Operations", self.test_update_operations),
+            ("UPDATE Admin", self.test_update_admin),
+            ("UPDATE Seller Deletion Request", self.test_update_seller_deletion_request),
             ("DELETE Operations", self.test_delete_operations)
         ]
         
