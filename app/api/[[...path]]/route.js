@@ -676,6 +676,11 @@ export async function DELETE(request, { params }) {
 
     // Railway API endpoints
     if (pathname === 'railway/status') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+
       try {
         const response = await fetch(`https://backboard.railway.app/graphql`, {
           method: 'POST',
@@ -714,11 +719,17 @@ export async function DELETE(request, { params }) {
         const data = await response.json()
         return NextResponse.json(data)
       } catch (error) {
+        console.error('Railway status error:', error)
         return NextResponse.json({ error: 'Failed to fetch Railway status' }, { status: 500 })
       }
     }
 
     if (pathname === 'railway/metrics') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+
       try {
         const response = await fetch(`https://backboard.railway.app/graphql`, {
           method: 'POST',
@@ -746,11 +757,17 @@ export async function DELETE(request, { params }) {
         const data = await response.json()
         return NextResponse.json(data)
       } catch (error) {
+        console.error('Railway metrics error:', error)
         return NextResponse.json({ error: 'Failed to fetch Railway metrics' }, { status: 500 })
       }
     }
 
     if (pathname === 'railway/logs') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+
       try {
         const response = await fetch(`https://backboard.railway.app/graphql`, {
           method: 'POST',
@@ -782,6 +799,7 @@ export async function DELETE(request, { params }) {
         const data = await response.json()
         return NextResponse.json(data)
       } catch (error) {
+        console.error('Railway logs error:', error)
         return NextResponse.json({ error: 'Failed to fetch Railway logs' }, { status: 500 })
       }
     }
