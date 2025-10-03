@@ -178,6 +178,119 @@ export async function GET(request, { params }) {
       })
     }
 
+    // Analytics data 
+    if (pathname === 'analytics') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+
+      try {
+        const [
+          sellersCount, categoriesCount, eventsCount, usersCount,
+          productsCount, variantsCount, ordersCount, totalRevenue
+        ] = await Promise.all([
+          supabase.from('sellers').select('*', { count: 'exact', head: true }),
+          supabase.from('categories').select('*', { count: 'exact', head: true }),
+          supabase.from('events').select('*', { count: 'exact', head: true }),
+          supabase.from('users').select('*', { count: 'exact', head: true }),
+          supabase.from('products').select('*', { count: 'exact', head: true }),
+          supabase.from('product_variants').select('*', { count: 'exact', head: true }),
+          supabase.from('orders').select('*', { count: 'exact', head: true }),
+          supabase.from('orders').select('total_price').eq('status', 'diterima')
+        ])
+
+        // Calculate total revenue
+        const revenue = totalRevenue.data?.reduce((sum, order) => {
+          return sum + parseFloat(order.total_price || 0)
+        }, 0) || 0
+
+        return NextResponse.json({
+          sellers: sellersCount.count || 0,
+          categories: categoriesCount.count || 0,
+          events: eventsCount.count || 0,
+          users: usersCount.count || 0,
+          products: productsCount.count || 0,
+          variants: variantsCount.count || 0,
+          orders: ordersCount.count || 0,
+          revenue: revenue
+        })
+      } catch (error) {
+        console.error('Analytics error:', error)
+        return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 })
+      }
+    }
+
+    // Seller deletion requests
+    if (pathname === 'seller-deletion-requests') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+      
+      const { data, error } = await supabase
+        .from('seller_deletion_requests')
+        .select(`
+          *,
+          sellers (
+            name,
+            email,
+            store_name,
+            business_name
+          )
+        `)
+        .order('created_at', { ascending: false })
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Seller balance transactions
+    if (pathname === 'seller-balance-transactions') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+      
+      const { data, error } = await supabase
+        .from('seller_balance_transactions')
+        .select(`
+          *,
+          sellers (
+            name,
+            store_name
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100)
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Seller balances
+    if (pathname === 'seller-balances') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+      
+      const { data, error } = await supabase
+        .from('seller_balances')
+        .select(`
+          *,
+          sellers (
+            name,
+            store_name,
+            email
+          )
+        `)
+        .order('updated_at', { ascending: false })
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
