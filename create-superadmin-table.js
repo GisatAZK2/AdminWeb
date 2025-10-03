@@ -1,9 +1,10 @@
+require('dotenv').config()
 const { createClient } = require('@supabase/supabase-js')
 const bcrypt = require('bcryptjs')
 const { v4: uuidv4 } = require('uuid')
 
-const supabaseUrl = process.env.SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.SUPABASE_URL || "https://hihfiptclwrwuklojdec.supabase.co"
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhpaGZpcHRjbHdyd3VrbG9qZGVjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MjM2MDAzMywiZXhwIjoyMDY3OTM2MDMzfQ.GBszVjjMhCDEH95ualnAZl5Vymqqj6sP9j2ngOfVscY"
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
