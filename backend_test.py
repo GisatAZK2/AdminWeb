@@ -236,8 +236,8 @@ class AdminDashboardTester:
                 "name": "Test Seller Company",
                 "email": "testseller@example.com",
                 "phone": "+1234567890",
-                "address": "123 Test Street, Test City",
-                "status": "active"
+                "store_name": "Test Store",
+                "business_name": "Test Business"
             }
             
             headers = {"Authorization": f"Bearer {self.token}"}
