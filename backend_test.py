@@ -247,6 +247,7 @@ class AdminDashboardTester:
                 "longitude": 106.8456,
                 "is_delivery_available": True,
                 "delivery_fee": 10000,
+                "store_image_url": "https://example.com/test-store-image.jpg",
                 "role": "seller"
             }
             
