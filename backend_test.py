@@ -309,9 +309,9 @@ class AdminDashboardTester:
             event_data = {
                 "title": "Test Event",
                 "description": "A test event for API testing",
-                "date": "2024-12-31T10:00:00Z",
-                "location": "Test Venue",
-                "status": "active"
+                "start_time": "2024-12-31T10:00:00Z",
+                "end_time": "2024-12-31T18:00:00Z",
+                "banner_url": "https://example.com/test-banner.jpg"
             }
             
             headers = {"Authorization": f"Bearer {self.token}"}
