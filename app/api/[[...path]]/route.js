@@ -420,6 +420,52 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ success: true })
     }
 
+    // Upload file to Supabase Storage
+    if (pathname === 'upload') {
+      try {
+        const formData = await request.formData()
+        const file = formData.get('file')
+        const bucket = formData.get('bucket') || 'uploads'
+        const folder = formData.get('folder') || 'files'
+        
+        if (!file) {
+          return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+        }
+
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const filePath = `${folder}/${fileName}`
+
+        // Convert file to buffer
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(filePath, buffer, {
+            contentType: file.type,
+            upsert: false
+          })
+
+        if (error) {
+          console.error('Supabase upload error:', error)
+          return NextResponse.json({ error: error.message }, { status: 500 })
+        }
+
+        // Get public URL
+        const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filePath)
+
+        return NextResponse.json({ 
+          success: true, 
+          url: publicData.publicUrl,
+          path: filePath
+        })
+      } catch (error) {
+        console.error('Upload error:', error)
+        return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
+      }
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
