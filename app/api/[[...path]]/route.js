@@ -123,6 +123,61 @@ export async function GET(request, { params }) {
       return NextResponse.json(data)
     }
 
+    // Setup endpoint for creating superadmin table
+    if (pathname === 'setup') {
+      try {
+        // Try to create the superadmin table using raw SQL
+        const { error } = await supabase.rpc('exec_sql', {
+          sql: `
+            CREATE TABLE IF NOT EXISTS superadmin (
+              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+              username VARCHAR(255) UNIQUE NOT NULL,
+              email VARCHAR(255) UNIQUE NOT NULL,
+              password VARCHAR(255) NOT NULL,
+              role VARCHAR(50) DEFAULT 'admin',
+              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+              updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+            );
+          `
+        })
+        
+        if (error) {
+          return NextResponse.json({ 
+            error: 'Could not create table automatically. Please create the superadmin table manually in Supabase.',
+            sql: `
+              CREATE TABLE superadmin (
+                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                username VARCHAR(255) UNIQUE NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                role VARCHAR(50) DEFAULT 'admin',
+                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+              );
+            `
+          }, { status: 500 })
+        }
+        
+        // Create default admin
+        const hashedPass = await hashPassword('admin123')
+        const { error: insertError } = await supabase.from('superadmin').insert({
+          id: uuidv4(),
+          username: 'admin',
+          email: 'admin@example.com',
+          password: hashedPass,
+          role: 'superadmin'
+        })
+        
+        if (insertError) {
+          return NextResponse.json({ error: 'Table created but could not create default admin', details: insertError }, { status: 500 })
+        }
+        
+        return NextResponse.json({ message: 'Setup completed successfully' })
+      } catch (error) {
+        return NextResponse.json({ error: 'Setup failed', details: error.message }, { status: 500 })
+      }
+    }
+
     // Stats/Analytics
     if (pathname === 'stats') {
       const authResult = await requireAuth(request)
