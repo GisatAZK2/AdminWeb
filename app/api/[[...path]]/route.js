@@ -228,21 +228,31 @@ export async function GET(request, { params }) {
         return NextResponse.json({ error: authResult.error }, { status: authResult.status })
       }
       
+      // Simple query first, will enhance with relationships later
       const { data, error } = await supabase
         .from('seller_deletion_requests')
-        .select(`
-          *,
-          sellers (
-            name,
-            email,
-            store_name,
-            business_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-      return NextResponse.json(data)
+      
+      // Get seller info for each request
+      const enrichedData = await Promise.all(
+        data.map(async (request) => {
+          const { data: sellerData } = await supabase
+            .from('sellers')
+            .select('name, email, store_name, business_name')
+            .eq('id', request.seller_id)
+            .single()
+          
+          return {
+            ...request,
+            sellers: sellerData
+          }
+        })
+      )
+      
+      return NextResponse.json(enrichedData)
     }
 
     // Seller balance transactions
