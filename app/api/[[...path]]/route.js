@@ -680,7 +680,7 @@ export async function DELETE(request, { params }) {
         const response = await fetch(`https://backboard.railway.app/graphql`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer d2a65e74-a02a-4f86-a389-586ed736a140`,
+            'Authorization': `Bearer ${process.env.RAILWAY_API_TOKEN}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -708,7 +708,7 @@ export async function DELETE(request, { params }) {
                 }
               }
             `,
-            variables: { projectId: '6ebd1c5c-286d-41e3-87df-6de10ea16dc9' }
+            variables: { projectId: process.env.RAILWAY_PROJECT_ID }
           })
         })
         const data = await response.json()
