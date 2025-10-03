@@ -6,14 +6,14 @@ import { v4 as uuidv4 } from 'uuid'
 // Initialize superadmin table and default admin user
 async function initializeSupabase() {
   try {
-    // Check if superadmin table exists by trying to query it
-    const { error } = await supabase.from('superadmin').select('id').limit(1)
+    // Check if default admin exists
+    const { data: admins, error } = await supabase.from('superadmin').select('*').limit(1)
     
-    if (error && error.code === '42P01') {
-      // Table doesn't exist, create it
-      const { error: createError } = await supabase.rpc('create_table', {
-        table_name: 'superadmin',
-        table_schema: `
+    if (error) {
+      console.log('Superadmin table might not exist:', error.message)
+      console.log('Please create the superadmin table in Supabase with the following schema:')
+      console.log(`
+        CREATE TABLE superadmin (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           username VARCHAR(255) UNIQUE NOT NULL,
           email VARCHAR(255) UNIQUE NOT NULL,
@@ -21,27 +21,27 @@ async function initializeSupabase() {
           role VARCHAR(50) DEFAULT 'admin',
           created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
           updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-        `
-      })
-      
-      if (createError) {
-        console.log('Error creating superadmin table:', createError)
-      }
+        );
+      `)
+      return
     }
-
-    // Check if default admin exists
-    const { data: admins } = await supabase.from('superadmin').select('*').limit(1)
     
     if (!admins || admins.length === 0) {
       // Create default admin
       const hashedPass = await hashPassword('admin123')
-      await supabase.from('superadmin').insert({
+      const { error: insertError } = await supabase.from('superadmin').insert({
         id: uuidv4(),
         username: 'admin',
         email: 'admin@example.com',
         password: hashedPass,
         role: 'superadmin'
       })
+      
+      if (insertError) {
+        console.log('Error creating default admin:', insertError)
+      } else {
+        console.log('Default admin created successfully')
+      }
     }
   } catch (error) {
     console.log('Initialization error:', error)
