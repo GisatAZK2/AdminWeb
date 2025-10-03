@@ -362,13 +362,13 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Categories management page"
-    - "Events management page"
-    - "Admin users management page"
-    - "Analytics dashboard page"
-    - "Seller deletion requests page"
+    - "Dashboard Stats API"
+    - "Railway Status API"
+    - "Railway Metrics API"
+    - "Railway Logs API"
+    - "Railway Environment Variables"
   stuck_tasks: []
-  test_all: true
+  test_all: false
   test_priority: "high_first"
 
 agent_communication:
@@ -376,3 +376,5 @@ agent_communication:
     message: "Completed implementation of all requested features: Categories CRUD with image upload, Events management with banner upload, Admin users management with 3 roles, Analytics dashboard with seller data, and Seller deletion requests system. All frontend pages created with full CRUD functionality and proper API integration."
   - agent: "testing"
     message: "Comprehensive backend API testing completed. 19/24 tests passed (79.2% success rate). Core CRUD operations working for Categories, Events, Sellers, and Admins. Authentication system fully functional. Issues identified: Supabase Storage bucket missing, database relationship problems for seller_balance_transactions and seller_deletion_requests tables."
+  - agent: "testing"
+    message: "Railway integration testing completed. CRITICAL BUG FIXED: Railway API endpoints were incorrectly implemented in DELETE method instead of GET method. Fixed all 3 Railway endpoints (/api/railway/status, /api/railway/metrics, /api/railway/logs) to use GET method and updated to Railway GraphQL v2 API. All Railway endpoints now working correctly. Dashboard stats API working. Overall backend success rate: 82.1% (23/28 tests passed)."
