@@ -123,59 +123,39 @@ export async function GET(request, { params }) {
       return NextResponse.json(data)
     }
 
-    // Setup endpoint for creating superadmin table
+    // Setup endpoint - provides instructions for manual setup
     if (pathname === 'setup') {
-      try {
-        // Try to create the superadmin table using raw SQL
-        const { error } = await supabase.rpc('exec_sql', {
-          sql: `
-            CREATE TABLE IF NOT EXISTS superadmin (
-              id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-              username VARCHAR(255) UNIQUE NOT NULL,
-              email VARCHAR(255) UNIQUE NOT NULL,
-              password VARCHAR(255) NOT NULL,
-              role VARCHAR(50) DEFAULT 'admin',
-              created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-              updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-            );
-          `
-        })
-        
-        if (error) {
-          return NextResponse.json({ 
-            error: 'Could not create table automatically. Please create the superadmin table manually in Supabase.',
-            sql: `
-              CREATE TABLE superadmin (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                username VARCHAR(255) UNIQUE NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                role VARCHAR(50) DEFAULT 'admin',
-                created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-                updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-              );
-            `
-          }, { status: 500 })
-        }
-        
-        // Create default admin
-        const hashedPass = await hashPassword('admin123')
-        const { error: insertError } = await supabase.from('superadmin').insert({
-          id: uuidv4(),
-          username: 'admin',
-          email: 'admin@example.com',
-          password: hashedPass,
-          role: 'superadmin'
-        })
-        
-        if (insertError) {
-          return NextResponse.json({ error: 'Table created but could not create default admin', details: insertError }, { status: 500 })
-        }
-        
-        return NextResponse.json({ message: 'Setup completed successfully' })
-      } catch (error) {
-        return NextResponse.json({ error: 'Setup failed', details: error.message }, { status: 500 })
-      }
+      return NextResponse.json({ 
+        message: 'Manual setup required',
+        instructions: [
+          '1. Go to your Supabase dashboard',
+          '2. Navigate to SQL Editor',
+          '3. Run the following SQL commands:',
+          '',
+          'CREATE TABLE IF NOT EXISTS superadmin (',
+          '  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),',
+          '  username VARCHAR(255) UNIQUE NOT NULL,',
+          '  email VARCHAR(255) UNIQUE NOT NULL,',
+          '  password VARCHAR(255) NOT NULL,',
+          '  role VARCHAR(50) DEFAULT \'admin\',',
+          '  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),',
+          '  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()',
+          ');',
+          '',
+          '-- Insert default admin (password: admin123)',
+          'INSERT INTO superadmin (username, email, password, role) VALUES (',
+          '  \'admin\',',
+          '  \'admin@example.com\',',
+          '  \'$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj3bp.Gm.F5W\',',
+          '  \'superadmin\'',
+          ') ON CONFLICT (username) DO NOTHING;',
+          '',
+          '4. After running the SQL, you can login with:',
+          '   Username: admin',
+          '   Password: admin123'
+        ],
+        sqlFile: 'A complete SQL file is available at /app/setup-superadmin.sql'
+      })
     }
 
     // Stats/Analytics
