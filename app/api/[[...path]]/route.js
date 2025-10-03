@@ -324,6 +324,11 @@ export async function GET(request, { params }) {
       return NextResponse.json(enrichedData)
     }
 
+    // Debug Railway path
+    if (pathname.startsWith('railway/')) {
+      console.log('Railway path detected:', pathname)
+    }
+
     // Railway API endpoints
     if (pathname === 'railway/status') {
       const authResult = await requireAuth(request)
