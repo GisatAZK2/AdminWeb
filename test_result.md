@@ -117,6 +117,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Added Categories GET, POST, PUT, DELETE endpoints with Supabase integration"
+      - working: true
+        agent: "testing"
+        comment: "All Categories CRUD operations tested successfully. GET, POST, PUT, DELETE endpoints working correctly with proper authentication."
 
   - task: "Events CRUD with banner upload"
     implemented: true
@@ -129,6 +132,9 @@ backend:
       - working: true
         agent: "main"
         comment: "Added Events GET, POST, PUT, DELETE endpoints with banner upload support"
+      - working: true
+        agent: "testing"
+        comment: "All Events CRUD operations tested successfully. GET, POST, PUT, DELETE endpoints working correctly with proper data validation."
 
   - task: "Admin users CRUD"
     implemented: true
@@ -141,30 +147,39 @@ backend:
       - working: true
         agent: "main"
         comment: "Added Admin users GET, POST, PUT, DELETE endpoints with role management"
+      - working: true
+        agent: "testing"
+        comment: "All Admin users CRUD operations tested successfully. Authentication, role management, and password hashing working correctly."
 
   - task: "File upload to Supabase Storage"
     implemented: true
-    working: true
+    working: false
     file: "app/api/[[...path]]/route.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added upload endpoint for images to Supabase Storage buckets"
+      - working: false
+        agent: "testing"
+        comment: "File upload endpoint failing with 'Bucket not found' error. Supabase Storage bucket 'uploads' needs to be created in Supabase dashboard."
 
   - task: "Seller deletion requests API"
     implemented: true
-    working: true
+    working: false
     file: "app/api/[[...path]]/route.js"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
     needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added seller deletion requests GET, POST, PUT endpoints"
+      - working: false
+        agent: "testing"
+        comment: "Seller deletion requests API has database relationship issues. GET endpoint fails with 'Could not find a relationship between seller_deletion_requests and sellers'. POST endpoint fails with empty error response."
 
   - task: "Analytics API endpoints"
     implemented: true
@@ -177,6 +192,21 @@ backend:
       - working: true
         agent: "main"
         comment: "Added analytics, seller-balance-transactions, seller-balances endpoints"
+      - working: true
+        agent: "testing"
+        comment: "Minor: Analytics and seller-balances endpoints working correctly. Seller-balance-transactions endpoint has relationship issues but core analytics functionality works."
+
+  - task: "Sellers CRUD operations"
+    implemented: true
+    working: true
+    file: "app/api/[[...path]]/route.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "testing"
+        comment: "All Sellers CRUD operations tested successfully. GET, POST, PUT, DELETE endpoints working correctly with complete seller data structure including location fields."
 
 frontend:
   - task: "Categories management page"
