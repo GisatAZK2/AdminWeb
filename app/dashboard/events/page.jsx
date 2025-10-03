@@ -37,6 +37,7 @@ import { toast } from 'sonner'
 
 export default function EventsPage() {
   const [events, setEvents] = useState([])
+  const [categoriesList, setCategoriesList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedEvent, setSelectedEvent] = useState(null)
@@ -47,6 +48,7 @@ export default function EventsPage() {
 
   useEffect(() => {
     fetchEvents()
+    fetchCategories()
   }, [])
 
   const fetchEvents = async () => {
@@ -69,6 +71,24 @@ export default function EventsPage() {
       console.error('Error:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem('admin_token')
+      const response = await fetch('/api/categories', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setCategoriesList(data)
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error)
     }
   }
 
@@ -115,7 +135,7 @@ export default function EventsPage() {
         banner_url: bannerUrl,
         start_time: formData.start_time,
         end_time: formData.end_time,
-        categories: formData.categories || '[]',
+        categories: formData.categories || [],
         min_stock: formData.min_stock ? parseInt(formData.min_stock) : null,
         min_discount: formData.min_discount ? parseFloat(formData.min_discount) : null
       }
@@ -159,7 +179,7 @@ export default function EventsPage() {
         banner_url: bannerUrl,
         start_time: formData.start_time,
         end_time: formData.end_time,
-        categories: formData.categories || '[]',
+        categories: formData.categories || [],
         min_stock: formData.min_stock ? parseInt(formData.min_stock) : null,
         min_discount: formData.min_discount ? parseFloat(formData.min_discount) : null
       }
@@ -235,7 +255,7 @@ export default function EventsPage() {
       end_time: event?.end_time ? new Date(event.end_time).toISOString().slice(0, 16) : '',
       min_stock: event?.min_stock || '',
       min_discount: event?.min_discount || '',
-      categories: event?.categories || '[]',
+      categories: event?.categories ? (Array.isArray(event.categories) ? event.categories : JSON.parse(event.categories)) : [],
       banner: null
     })
     const [imagePreview, setImagePreview] = useState(event?.banner_url || null)
@@ -300,6 +320,38 @@ export default function EventsPage() {
               required
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label>Categories (Optional)</Label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto p-2 border rounded-md">
+            {categoriesList.map((category) => (
+              <div key={category.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`category-${category.id}`}
+                  className="rounded"
+                  checked={formData.categories.includes(category.name)}
+                  onChange={(e) => {
+                    const isChecked = e.target.checked
+                    let newCategories
+                    if (isChecked) {
+                      newCategories = [...formData.categories, category.name]
+                    } else {
+                      newCategories = formData.categories.filter((c) => c !== category.name)
+                    }
+                    setFormData({ ...formData, categories: newCategories })
+                  }}
+                />
+                <Label htmlFor={`category-${category.id}`} className="text-sm cursor-pointer flex-1">
+                  {category.name}
+                </Label>
+              </div>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Select categories this event applies to
+          </p>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -398,6 +450,18 @@ export default function EventsPage() {
               <Label className="text-sm font-medium">Min Discount</Label>
               <p className="text-sm text-muted-foreground">{event?.min_discount ? `${event.min_discount}%` : 'No minimum'}</p>
             </div>
+          </div>
+          <div>
+            <Label className="text-sm font-medium">Categories</Label>
+            {event.categories?.length > 0 ? (
+              <div className="flex flex-wrap gap-1 mt-1">
+                {event.categories.map((cat) => (
+                  <Badge key={cat} variant="secondary">{cat}</Badge>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-1">None</p>
+            )}
           </div>
           <div>
             <Label className="text-sm font-medium">Status</Label>
@@ -518,6 +582,20 @@ export default function EventsPage() {
                           <p className="text-sm text-muted-foreground max-w-xs truncate">
                             {event.description}
                           </p>
+                          {event.categories?.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {event.categories.slice(0, 3).map((cat) => (
+                                <Badge key={cat} variant="outline" className="text-xs px-1 py-0.5">
+                                  {cat}
+                                </Badge>
+                              ))}
+                              {event.categories.length > 3 && (
+                                <Badge variant="outline" className="text-xs px-1 py-0.5">
+                                  +{event.categories.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>
