@@ -238,7 +238,8 @@ class AdminDashboardTester:
                 "phone": "+1234567890",
                 "store_name": "Test Store",
                 "business_name": "Test Business",
-                "store_address": "123 Test Street, Test City"
+                "store_address": "123 Test Street, Test City",
+                "provinsi": "Jakarta"
             }
             
             headers = {"Authorization": f"Bearer {self.token}"}
