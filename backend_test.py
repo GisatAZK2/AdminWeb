@@ -791,6 +791,142 @@ class AdminDashboardTester:
             self.log_result("UPDATE Admin", False, "Request failed", str(e))
             return False
     
+    def test_railway_status_endpoint(self):
+        """Test Railway status endpoint - CRITICAL: Currently implemented incorrectly as DELETE instead of GET"""
+        if not self.token:
+            self.log_result("Railway Status API", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            
+            # Test GET request (correct method)
+            response = requests.get(f"{API_BASE}/railway/status", headers=headers, timeout=15)
+            
+            if response.status_code == 404:
+                # Try DELETE method (incorrect implementation)
+                response = requests.delete(f"{API_BASE}/railway/status", headers=headers, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_result("Railway Status API", False, "CRITICAL BUG: Railway status endpoint implemented as DELETE instead of GET", 
+                                  "Frontend expects GET but backend implements DELETE")
+                    return False
+                else:
+                    self.log_result("Railway Status API", False, f"Railway API call failed: HTTP {response.status_code}", response.text)
+                    return False
+            elif response.status_code == 200:
+                data = response.json()
+                self.log_result("Railway Status API", True, "Railway status endpoint working correctly")
+                return True
+            else:
+                self.log_result("Railway Status API", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Railway Status API", False, "Request failed", str(e))
+            return False
+    
+    def test_railway_metrics_endpoint(self):
+        """Test Railway metrics endpoint - CRITICAL: Currently implemented incorrectly as DELETE instead of GET"""
+        if not self.token:
+            self.log_result("Railway Metrics API", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            
+            # Test GET request (correct method)
+            response = requests.get(f"{API_BASE}/railway/metrics", headers=headers, timeout=15)
+            
+            if response.status_code == 404:
+                # Try DELETE method (incorrect implementation)
+                response = requests.delete(f"{API_BASE}/railway/metrics", headers=headers, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_result("Railway Metrics API", False, "CRITICAL BUG: Railway metrics endpoint implemented as DELETE instead of GET", 
+                                  "Frontend expects GET but backend implements DELETE")
+                    return False
+                else:
+                    self.log_result("Railway Metrics API", False, f"Railway API call failed: HTTP {response.status_code}", response.text)
+                    return False
+            elif response.status_code == 200:
+                data = response.json()
+                self.log_result("Railway Metrics API", True, "Railway metrics endpoint working correctly")
+                return True
+            else:
+                self.log_result("Railway Metrics API", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Railway Metrics API", False, "Request failed", str(e))
+            return False
+    
+    def test_railway_logs_endpoint(self):
+        """Test Railway logs endpoint - CRITICAL: Currently implemented incorrectly as DELETE instead of GET"""
+        if not self.token:
+            self.log_result("Railway Logs API", False, "No token available")
+            return False
+            
+        try:
+            headers = {"Authorization": f"Bearer {self.token}"}
+            
+            # Test GET request (correct method)
+            response = requests.get(f"{API_BASE}/railway/logs", headers=headers, timeout=15)
+            
+            if response.status_code == 404:
+                # Try DELETE method (incorrect implementation)
+                response = requests.delete(f"{API_BASE}/railway/logs", headers=headers, timeout=15)
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    self.log_result("Railway Logs API", False, "CRITICAL BUG: Railway logs endpoint implemented as DELETE instead of GET", 
+                                  "Frontend expects GET but backend implements DELETE")
+                    return False
+                else:
+                    self.log_result("Railway Logs API", False, f"Railway API call failed: HTTP {response.status_code}", response.text)
+                    return False
+            elif response.status_code == 200:
+                data = response.json()
+                self.log_result("Railway Logs API", True, "Railway logs endpoint working correctly")
+                return True
+            else:
+                self.log_result("Railway Logs API", False, f"HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Railway Logs API", False, "Request failed", str(e))
+            return False
+    
+    def test_railway_environment_variables(self):
+        """Test Railway environment variables are loaded properly"""
+        try:
+            # Test if Railway API token is configured by making a simple request
+            headers = {"Authorization": f"Bearer {self.token}"}
+            
+            # Try the incorrectly implemented DELETE endpoint first
+            response = requests.delete(f"{API_BASE}/railway/status", headers=headers, timeout=15)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if 'errors' in data and any('authentication' in str(error).lower() for error in data.get('errors', [])):
+                    self.log_result("Railway Environment Variables", False, "Railway API token authentication failed", data)
+                    return False
+                else:
+                    self.log_result("Railway Environment Variables", True, "Railway environment variables loaded and API token working")
+                    return True
+            elif response.status_code == 500:
+                self.log_result("Railway Environment Variables", False, "Railway API integration error - check token and configuration", response.text)
+                return False
+            else:
+                self.log_result("Railway Environment Variables", False, f"Unexpected response: HTTP {response.status_code}", response.text)
+                return False
+                
+        except Exception as e:
+            self.log_result("Railway Environment Variables", False, "Request failed", str(e))
+            return False
+
     def test_delete_operations(self):
         """Test DELETE operations for removing records"""
         if not self.token:
