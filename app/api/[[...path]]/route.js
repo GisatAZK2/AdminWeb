@@ -500,6 +500,52 @@ export async function PUT(request, { params }) {
       return NextResponse.json(data)
     }
 
+    // Update admin user
+    if (pathname.startsWith('admins/') && path.length === 2) {
+      const adminId = path[1]
+      const updateData = {
+        username: body.username,
+        email: body.email,
+        role: body.role,
+        updated_at: new Date().toISOString()
+      }
+      
+      // Only update password if provided
+      if (body.password) {
+        updateData.password = await hashPassword(body.password)
+      }
+      
+      const { data, error } = await supabase
+        .from('superadmin')
+        .update(updateData)
+        .eq('id', adminId)
+        .select('id, username, email, role, created_at, updated_at')
+        .single()
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Update seller deletion request
+    if (pathname.startsWith('seller-deletion-requests/') && path.length === 2) {
+      const requestId = path[1]
+      const updateData = {
+        status: body.status,
+        admin_notes: body.admin_notes || null,
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase
+        .from('seller_deletion_requests')
+        .update(updateData)
+        .eq('id', requestId)
+        .select()
+        .single()
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
