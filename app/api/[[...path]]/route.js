@@ -295,6 +295,22 @@ export async function POST(request, { params }) {
       return NextResponse.json(data)
     }
 
+    // Create seller deletion request  
+    if (pathname === 'seller-deletion-requests') {
+      const newRequest = {
+        id: uuidv4(),
+        seller_id: body.seller_id,
+        reason: body.reason,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase.from('seller_deletion_requests').insert(newRequest).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
