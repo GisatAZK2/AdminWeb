@@ -183,19 +183,15 @@ export default function Dashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
-              <Users className="h-4 w-4 mr-2" />
-              Add New Seller
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/dashboard/categories'}>
               <Tag className="h-4 w-4 mr-2" />
               Create Category
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/dashboard/events'}>
               <Calendar className="h-4 w-4 mr-2" />
               Schedule Event
             </Button>
-            <Button className="w-full justify-start" variant="outline">
+            <Button className="w-full justify-start" variant="outline" onClick={() => window.location.href = '/dashboard/reports'}>
               <Eye className="h-4 w-4 mr-2" />
               View Reports
             </Button>
