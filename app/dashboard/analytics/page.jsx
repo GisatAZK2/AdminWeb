@@ -95,6 +95,17 @@ export default function AnalyticsPage() {
     }
   }
 
+  const getTransactionSource = (metadata) => {
+    if (!metadata) return 'Manual'
+    try {
+      const parsed = JSON.parse(metadata)
+      return parsed?.source || 'Unknown'
+    } catch (error) {
+      console.warn('Invalid metadata JSON:', metadata, error)
+      return 'Unknown'
+    }
+  }
+
   const StatCard = ({ title, value, icon: Icon, trend, color = 'primary', format = 'number' }) => (
     <Card className="relative overflow-hidden">
       <CardContent className="p-6">
@@ -256,10 +267,7 @@ export default function AnalyticsPage() {
                           </TableCell>
                           <TableCell>
                             <p className="text-sm text-muted-foreground">
-                              {transaction.metadata ? 
-                                JSON.parse(transaction.metadata)?.source || 'Unknown' : 
-                                'Manual'
-                              }
+                              {getTransactionSource(transaction.metadata)}
                             </p>
                           </TableCell>
                         </TableRow>
