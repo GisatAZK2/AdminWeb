@@ -674,6 +674,118 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ success: true })
     }
 
+    // Railway API endpoints
+    if (pathname === 'railway/status') {
+      try {
+        const response = await fetch(`https://backboard.railway.app/graphql`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer d2a65e74-a02a-4f86-a389-586ed736a140`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: `
+              query GetProject($projectId: String!) {
+                project(id: $projectId) {
+                  id
+                  name
+                  environments {
+                    nodes {
+                      id
+                      name
+                      deployments {
+                        edges {
+                          node {
+                            id
+                            status
+                            createdAt
+                            meta
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `,
+            variables: { projectId: '6ebd1c5c-286d-41e3-87df-6de10ea16dc9' }
+          })
+        })
+        const data = await response.json()
+        return NextResponse.json(data)
+      } catch (error) {
+        return NextResponse.json({ error: 'Failed to fetch Railway status' }, { status: 500 })
+      }
+    }
+
+    if (pathname === 'railway/metrics') {
+      try {
+        const response = await fetch(`https://backboard.railway.app/graphql`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer d2a65e74-a02a-4f86-a389-586ed736a140`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: `
+              query GetServiceMetrics($serviceId: String!) {
+                serviceInstance(serviceId: $serviceId) {
+                  id
+                  serviceName
+                  latestDeployment {
+                    id
+                    status
+                    createdAt
+                  }
+                }
+              }
+            `,
+            variables: { serviceId: 'c4dbe6c3-0a3d-4cdc-828d-922438f701ab' }
+          })
+        })
+        const data = await response.json()
+        return NextResponse.json(data)
+      } catch (error) {
+        return NextResponse.json({ error: 'Failed to fetch Railway metrics' }, { status: 500 })
+      }
+    }
+
+    if (pathname === 'railway/logs') {
+      try {
+        const response = await fetch(`https://backboard.railway.app/graphql`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer d2a65e74-a02a-4f86-a389-586ed736a140`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: `
+              query GetLogs($projectId: String!, $environmentId: String!, $serviceId: String!) {
+                logs(projectId: $projectId, environmentId: $environmentId, serviceId: $serviceId, filter: {}, limit: 100) {
+                  edges {
+                    node {
+                      timestamp
+                      message
+                      severity
+                    }
+                  }
+                }
+              }
+            `,
+            variables: {
+              projectId: '6ebd1c5c-286d-41e3-87df-6de10ea16dc9',
+              environmentId: 'c54e235d-3867-4ce3-8248-630a93abaa2b',
+              serviceId: 'c4dbe6c3-0a3d-4cdc-828d-922438f701ab'
+            }
+          })
+        })
+        const data = await response.json()
+        return NextResponse.json(data)
+      } catch (error) {
+        return NextResponse.json({ error: 'Failed to fetch Railway logs' }, { status: 500 })
+      }
+    }
+
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
