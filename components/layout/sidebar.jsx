@@ -52,6 +52,11 @@ const menuItems = [
     icon: BarChart3
   },
   {
+    title: 'Deletion Requests',
+    href: '/dashboard/seller-deletion-requests',
+    icon: UserMinus
+  },
+  {
     title: 'Reports',
     href: '/dashboard/reports',
     icon: FileText
