@@ -337,7 +337,7 @@ export async function GET(request, { params }) {
       }
 
       try {
-        const response = await fetch(`https://backboard.railway.app/graphql`, {
+        const response = await fetch(`https://backboard.railway.com/graphql/v2`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${process.env.RAILWAY_API_TOKEN}`,
@@ -359,7 +359,6 @@ export async function GET(request, { params }) {
                             id
                             status
                             createdAt
-                            meta
                           }
                         }
                       }
