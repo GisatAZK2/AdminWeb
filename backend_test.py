@@ -273,7 +273,7 @@ class AdminDashboardTester:
             category_data = {
                 "name": "Test Category",
                 "description": "A test category for API testing",
-                "status": "active"
+                "image_url": "https://example.com/test-image.jpg"
             }
             
             headers = {"Authorization": f"Bearer {self.token}"}
