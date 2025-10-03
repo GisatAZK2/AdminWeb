@@ -1,104 +1,393 @@
-import { MongoClient } from 'mongodb'
+import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
+import { hashPassword, verifyPassword, generateToken, requireAuth } from '@/lib/auth'
 import { v4 as uuidv4 } from 'uuid'
-import { NextResponse } from 'next/server'
 
-// MongoDB connection
-let client
-let db
+// Initialize superadmin table and default admin user
+async function initializeSupabase() {
+  try {
+    // Check if superadmin table exists by trying to query it
+    const { error } = await supabase.from('superadmin').select('id').limit(1)
+    
+    if (error && error.code === '42P01') {
+      // Table doesn't exist, create it
+      const { error: createError } = await supabase.rpc('create_table', {
+        table_name: 'superadmin',
+        table_schema: `
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          username VARCHAR(255) UNIQUE NOT NULL,
+          email VARCHAR(255) UNIQUE NOT NULL,
+          password VARCHAR(255) NOT NULL,
+          role VARCHAR(50) DEFAULT 'admin',
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+        `
+      })
+      
+      if (createError) {
+        console.log('Error creating superadmin table:', createError)
+      }
+    }
 
-async function connectToMongo() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL)
-    await client.connect()
-    db = client.db(process.env.DB_NAME)
+    // Check if default admin exists
+    const { data: admins } = await supabase.from('superadmin').select('*').limit(1)
+    
+    if (!admins || admins.length === 0) {
+      // Create default admin
+      const hashedPass = await hashPassword('admin123')
+      await supabase.from('superadmin').insert({
+        id: uuidv4(),
+        username: 'admin',
+        email: 'admin@example.com',
+        password: hashedPass,
+        role: 'superadmin'
+      })
+    }
+  } catch (error) {
+    console.log('Initialization error:', error)
   }
-  return db
 }
 
-// Helper function to handle CORS
-function handleCORS(response) {
-  response.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  response.headers.set('Access-Control-Allow-Credentials', 'true')
-  return response
-}
+// Initialize on first load
+initializeSupabase()
 
-// OPTIONS handler for CORS
-export async function OPTIONS() {
-  return handleCORS(new NextResponse(null, { status: 200 }))
-}
-
-// Route handler function
-async function handleRoute(request, { params }) {
-  const { path = [] } = params
-  const route = `/${path.join('/')}`
-  const method = request.method
+export async function GET(request, { params }) {
+  const url = new URL(request.url)
+  const path = params?.path || []
+  const pathname = path.join('/')
 
   try {
-    const db = await connectToMongo()
-
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/root' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
+    // Auth routes
+    if (pathname === 'auth/me') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
+      return NextResponse.json({ user: authResult.user })
     }
 
-    // Status endpoints - POST /api/status
-    if (route === '/status' && method === 'POST') {
-      const body = await request.json()
+    // Sellers routes
+    if (pathname === 'sellers') {
+      const { data, error } = await supabase.from('sellers').select('*').order('created_at', { ascending: false })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    if (pathname.startsWith('sellers/') && path.length === 2) {
+      const sellerId = path[1]
+      const { data, error } = await supabase.from('sellers').select('*').eq('id', sellerId).single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+      return NextResponse.json(data)
+    }
+
+    // Categories routes
+    if (pathname === 'categories') {
+      const { data, error } = await supabase.from('categories').select('*').order('created_at', { ascending: false })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    if (pathname.startsWith('categories/') && path.length === 2) {
+      const categoryId = path[1]
+      const { data, error } = await supabase.from('categories').select('*').eq('id', categoryId).single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+      return NextResponse.json(data)
+    }
+
+    // Events routes
+    if (pathname === 'events') {
+      const { data, error } = await supabase.from('events').select('*').order('created_at', { ascending: false })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    if (pathname.startsWith('events/') && path.length === 2) {
+      const eventId = path[1]
+      const { data, error } = await supabase.from('events').select('*').eq('id', eventId).single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+      return NextResponse.json(data)
+    }
+
+    // Admin users routes
+    if (pathname === 'admins') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+      }
       
-      if (!body.client_name) {
-        return handleCORS(NextResponse.json(
-          { error: "client_name is required" }, 
-          { status: 400 }
-        ))
+      const { data, error } = await supabase
+        .from('superadmin')
+        .select('id, username, email, role, created_at, updated_at')
+        .order('created_at', { ascending: false })
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Stats/Analytics
+    if (pathname === 'stats') {
+      const authResult = await requireAuth(request)
+      if (authResult.error) {
+        return NextResponse.json({ error: authResult.error }, { status: authResult.status })
       }
 
-      const statusObj = {
-        id: uuidv4(),
-        client_name: body.client_name,
-        timestamp: new Date()
-      }
+      const [sellersCount, categoriesCount, eventsCount] = await Promise.all([
+        supabase.from('sellers').select('*', { count: 'exact', head: true }),
+        supabase.from('categories').select('*', { count: 'exact', head: true }),
+        supabase.from('events').select('*', { count: 'exact', head: true })
+      ])
 
-      await db.collection('status_checks').insertOne(statusObj)
-      return handleCORS(NextResponse.json(statusObj))
+      return NextResponse.json({
+        sellers: sellersCount.count || 0,
+        categories: categoriesCount.count || 0,
+        events: eventsCount.count || 0
+      })
     }
 
-    // Status endpoints - GET /api/status
-    if (route === '/status' && method === 'GET') {
-      const statusChecks = await db.collection('status_checks')
-        .find({})
-        .limit(1000)
-        .toArray()
-
-      // Remove MongoDB's _id field from response
-      const cleanedStatusChecks = statusChecks.map(({ _id, ...rest }) => rest)
-      
-      return handleCORS(NextResponse.json(cleanedStatusChecks))
-    }
-
-    // Route not found
-    return handleCORS(NextResponse.json(
-      { error: `Route ${route} not found` }, 
-      { status: 404 }
-    ))
-
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
   } catch (error) {
     console.error('API Error:', error)
-    return handleCORS(NextResponse.json(
-      { error: "Internal server error" }, 
-      { status: 500 }
-    ))
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
-// Export all HTTP methods
-export const GET = handleRoute
-export const POST = handleRoute
-export const PUT = handleRoute
-export const DELETE = handleRoute
-export const PATCH = handleRoute
+export async function POST(request, { params }) {
+  const path = params?.path || []
+  const pathname = path.join('/')
+
+  try {
+    const body = await request.json()
+
+    // Auth login
+    if (pathname === 'auth/login') {
+      const { username, password } = body
+
+      const { data: admin, error } = await supabase
+        .from('superadmin')
+        .select('*')
+        .eq('username', username)
+        .single()
+
+      if (error || !admin) {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+      }
+
+      const isValidPassword = await verifyPassword(password, admin.password)
+      if (!isValidPassword) {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })
+      }
+
+      const token = generateToken({
+        id: admin.id,
+        username: admin.username,
+        email: admin.email,
+        role: admin.role
+      })
+
+      return NextResponse.json({
+        token,
+        user: {
+          id: admin.id,
+          username: admin.username,
+          email: admin.email,
+          role: admin.role
+        }
+      })
+    }
+
+    // Protected routes - require authentication
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    // Create new seller
+    if (pathname === 'sellers') {
+      const newSeller = {
+        id: uuidv4(),
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase.from('sellers').insert(newSeller).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Create new category
+    if (pathname === 'categories') {
+      const newCategory = {
+        id: uuidv4(),
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase.from('categories').insert(newCategory).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Create new event
+    if (pathname === 'events') {
+      const newEvent = {
+        id: uuidv4(),
+        ...body,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase.from('events').insert(newEvent).select().single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Create new admin
+    if (pathname === 'admins') {
+      const hashedPass = await hashPassword(body.password)
+      const newAdmin = {
+        id: uuidv4(),
+        username: body.username,
+        email: body.email,
+        password: hashedPass,
+        role: body.role || 'admin',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase.from('superadmin').insert(newAdmin).select('id, username, email, role, created_at, updated_at').single()
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function PUT(request, { params }) {
+  const path = params?.path || []
+  const pathname = path.join('/')
+
+  try {
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    const body = await request.json()
+
+    // Update seller
+    if (pathname.startsWith('sellers/') && path.length === 2) {
+      const sellerId = path[1]
+      const updateData = {
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase
+        .from('sellers')
+        .update(updateData)
+        .eq('id', sellerId)
+        .select()
+        .single()
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Update category
+    if (pathname.startsWith('categories/') && path.length === 2) {
+      const categoryId = path[1]
+      const updateData = {
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase
+        .from('categories')
+        .update(updateData)
+        .eq('id', categoryId)
+        .select()
+        .single()
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    // Update event
+    if (pathname.startsWith('events/') && path.length === 2) {
+      const eventId = path[1]
+      const updateData = {
+        ...body,
+        updated_at: new Date().toISOString()
+      }
+      
+      const { data, error } = await supabase
+        .from('events')
+        .update(updateData)
+        .eq('id', eventId)
+        .select()
+        .single()
+        
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json(data)
+    }
+
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const path = params?.path || []
+  const pathname = path.join('/')
+
+  try {
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json({ error: authResult.error }, { status: authResult.status })
+    }
+
+    // Delete seller
+    if (pathname.startsWith('sellers/') && path.length === 2) {
+      const sellerId = path[1]
+      const { error } = await supabase.from('sellers').delete().eq('id', sellerId)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: true })
+    }
+
+    // Delete category
+    if (pathname.startsWith('categories/') && path.length === 2) {
+      const categoryId = path[1]
+      const { error } = await supabase.from('categories').delete().eq('id', categoryId)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: true })
+    }
+
+    // Delete event
+    if (pathname.startsWith('events/') && path.length === 2) {
+      const eventId = path[1]
+      const { error } = await supabase.from('events').delete().eq('id', eventId)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: true })
+    }
+
+    // Delete admin
+    if (pathname.startsWith('admins/') && path.length === 2) {
+      const adminId = path[1]
+      const { error } = await supabase.from('superadmin').delete().eq('id', adminId)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ success: true })
+    }
+
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
