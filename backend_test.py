@@ -239,7 +239,15 @@ class AdminDashboardTester:
                 "store_name": "Test Store",
                 "business_name": "Test Business",
                 "store_address": "123 Test Street, Test City",
-                "provinsi": "Jakarta"
+                "provinsi": "Jakarta",
+                "kabupaten": "Jakarta Selatan",
+                "kecamatan": "Kebayoran Baru",
+                "kelurahan": "Senayan",
+                "latitude": -6.2088,
+                "longitude": 106.8456,
+                "is_delivery_available": True,
+                "delivery_fee": 10000,
+                "role": "seller"
             }
             
             headers = {"Authorization": f"Bearer {self.token}"}
